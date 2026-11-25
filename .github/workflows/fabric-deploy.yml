@@ -1,0 +1,73 @@
+name: Fabric CI/CD
+
+# File ini identik di repo sarailmax-3-dev dan sarailmax-3-test.
+# Target deploy ditentukan oleh .deploy/deploy.py dari nama repository:
+#   sarailmax-3-dev -> environment test, sarailmax-3-test -> environment prod
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+    paths:
+      - "**.Notebook/**"
+      - ".deploy/**"
+      - ".github/workflows/fabric-deploy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  PIP_NO_CACHE_DIR: "1"
+
+jobs:
+  validate:
+    name: validate
+    runs-on: ubuntu-latest
+    outputs:
+      target: ${{ steps.check.outputs.target }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Validasi repository dan notebook
+        id: check
+        run: python .deploy/deploy.py --check
+
+  deploy:
+    name: deploy
+    needs: validate
+    # Deploy hanya setelah merge ke main, tidak pada pull request.
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: ${{ needs.validate.outputs.target }}
+    concurrency:
+      group: fabric-deploy-${{ needs.validate.outputs.target }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install fabric-cicd
+        run: pip install -r .deploy/requirements.txt
+
+      - name: Deploy notebook ke ${{ needs.validate.outputs.target }}
+        run: python .deploy/deploy.py
+        env:
+          FABRIC_WORKSPACE_ID: ${{ vars.FABRIC_WORKSPACE_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
