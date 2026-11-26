@@ -8,15 +8,12 @@
 # META   },
 # META   "dependencies": {
 # META     "lakehouse": {
-# META       "default_lakehouse": "86bf37eb-1310-468c-a5ca-d6ea1ebd343e",
+# META       "default_lakehouse": "26437c2e-cb5f-4412-8a0e-1c2819599736",
 # META       "default_lakehouse_name": "sarailmax_lh",
-# META       "default_lakehouse_workspace_id": "7a289e5a-6fae-4253-be62-e2fa4c3e9a5e",
+# META       "default_lakehouse_workspace_id": "1bc2ff77-af62-4dcc-8767-9f2e32f6f22c",
 # META       "known_lakehouses": [
 # META         {
-# META           "id": "954ffffe-e1b0-49e7-b6f7-fb165a0ade69"
-# META         },
-# META         {
-# META           "id": "86bf37eb-1310-468c-a5ca-d6ea1ebd343e"
+# META           "id": "26437c2e-cb5f-4412-8a0e-1c2819599736"
 # META         }
 # META       ]
 # META     },
@@ -25,17 +22,6 @@
 # META       "workspaceId": "00000000-0000-0000-0000-000000000000"
 # META     }
 # META   }
-# META }
-
-# CELL ********************
-
-pass
-
-# METADATA ********************
-
-# META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
 # META }
 
 # MARKDOWN ********************
@@ -117,6 +103,7 @@ from sklearn.metrics import (
 
 from datetime import datetime
 from zoneinfo import ZoneInfo
+import re
 
 # Menonaktifkan pesan peringatan agar tampilan notebook lebih rapi dan fokus
 warnings.filterwarnings("ignore")
@@ -1016,10 +1003,12 @@ combined_df = pd.concat(
 
 spark_combined_df = spark.createDataFrame(combined_df)
 
+table_name = "sales_actual_forecast_" + re.sub(r"[^0-9A-Za-z_]", "_", TIMESTAMP)
+
 spark_combined_df.write \
     .mode("overwrite") \
     .option("overwriteSchema", "true") \
-    .saveAsTable("sales_actual_forecast")
+    .saveAsTable(table_name)
 
 # METADATA ********************
 
