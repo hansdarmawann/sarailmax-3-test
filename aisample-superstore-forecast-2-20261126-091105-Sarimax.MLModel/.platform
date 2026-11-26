@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "MLModel",
+    "displayName": "aisample-superstore-forecast-2-20261126-091105-Sarimax"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "736b4380-d080-8e58-4e15-8722c578ba2d"
+  }
+}
