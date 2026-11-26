@@ -11,7 +11,9 @@ Pemakaian:
 
 Saat deploy, kredensial service principal dibaca dari AZURE_TENANT_ID,
 AZURE_CLIENT_ID, dan AZURE_CLIENT_SECRET, sedangkan ID workspace target dari
-FABRIC_WORKSPACE_ID. Script ini tidak membuat file apa pun.
+FABRIC_WORKSPACE_ID. Lakehouse, workspace, dan environment di META notebook
+diganti ke milik workspace target sesuai .deploy/parameter.yml. Script ini
+tidak membuat file apa pun.
 """
 
 import argparse
@@ -35,6 +37,9 @@ WORKSPACE_IDS = {
 
 # Hanya notebook yang di-deploy; lakehouse dan environment tidak disentuh.
 ITEM_TYPES = ["Notebook"]
+
+# Aturan penggantian ID di META notebook (relatif terhadap root repository).
+PARAMETER_FILE = ".deploy/parameter.yml"
 
 SPN_VARS = ("AZURE_TENANT_ID", "AZURE_CLIENT_ID", "AZURE_CLIENT_SECRET")
 CONFLICT_MARKER = re.compile(r"^(<{7}|>{7})( |$)", re.MULTILINE)
@@ -118,6 +123,7 @@ def deploy(target):
         environment=target,
         repository_directory=str(REPO_ROOT),
         item_type_in_scope=ITEM_TYPES,
+        parameter_file_path=PARAMETER_FILE,
         token_credential=ClientSecretCredential(
             tenant_id=os.environ["AZURE_TENANT_ID"],
             client_id=os.environ["AZURE_CLIENT_ID"],
