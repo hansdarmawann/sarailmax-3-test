@@ -1,0 +1,47 @@
+# Parameterisasi fabric-cicd: menyesuaikan META notebook dengan workspace target.
+#
+# File ini identik di repo sarailmax-3-dev dan sarailmax-3-test. Notebook di
+# repo menyimpan ID lakehouse, workspace, dan environment milik workspace
+# sumber. Saat deploy, ID tersebut diganti dengan ID item yang bernama sama di
+# workspace target:
+#   sarailmax-3-dev  -> environment "test": sarailmax_lh dan sarailmax_envi di workspace test
+#   sarailmax-3-test -> environment "prod": sarailmax_lh dan sarailmax_envi di workspace prod
+#
+# $items.<tipe>.<nama>.$id dan $workspace.$id dibaca dari workspace target saat
+# deploy, jadi tidak ada GUID yang ditulis manual. Pola regex hanya mengganti
+# bagian yang ditangkap (group 1).
+
+find_replace:
+  # Lakehouse default (yang di-pin) -> sarailmax_lh di workspace target
+  - find_value: '#\s*META\s+"default_lakehouse":\s*"([0-9a-fA-F-]{36})"'
+    replace_value:
+      test: "$items.Lakehouse.sarailmax_lh.$id"
+      prod: "$items.Lakehouse.sarailmax_lh.$id"
+    is_regex: "true"
+    item_type: "Notebook"
+
+  # Workspace pemilik lakehouse default -> workspace target
+  - find_value: '#\s*META\s+"default_lakehouse_workspace_id":\s*"([0-9a-fA-F-]{36})"'
+    replace_value:
+      test: "$workspace.$id"
+      prod: "$workspace.$id"
+    is_regex: "true"
+    item_type: "Notebook"
+
+  # Daftar known_lakehouses diringkas menjadi satu entri, yaitu sarailmax_lh
+  # target, agar lakehouse dari workspace sumber tidak ikut terbawa.
+  - find_value: '"known_lakehouses":\s*\[\s*#\s*META\s*\{\s*#\s*META\s*"id":\s*"([^\]]*?)"\s*#\s*META\s*\}\s*#\s*META\s*\]'
+    replace_value:
+      test: "$items.Lakehouse.sarailmax_lh.$id"
+      prod: "$items.Lakehouse.sarailmax_lh.$id"
+    is_regex: "true"
+    item_type: "Notebook"
+
+  # Environment notebook -> sarailmax_envi di workspace target
+  # ("workspaceId": "00000000-..." diisi fabric-cicd dengan ID workspace target)
+  - find_value: '#\s*META\s+"environmentId":\s*"([0-9a-fA-F-]{36})"'
+    replace_value:
+      test: "$items.Environment.sarailmax_envi.$id"
+      prod: "$items.Environment.sarailmax_envi.$id"
+    is_regex: "true"
+    item_type: "Notebook"
